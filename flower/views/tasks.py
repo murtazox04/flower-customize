@@ -1,10 +1,12 @@
 import copy
+import json
 import logging
 from functools import total_ordering
 
 from tornado import web
 
 from ..utils.tasks import as_dict, get_task_by_id, iter_tasks
+from ..utils.search import parse_search_terms
 from ..views import BaseHandler
 
 logger = logging.getLogger(__name__)
@@ -55,7 +57,7 @@ class TasksDataTable(BaseHandler):
         sort_order = self.get_argument('order[0][dir]', type=str) == 'desc'
 
         def key(item):
-            return Comparable(getattr(item[1], sort_by))
+            return getattr(item[1], sort_by)
 
         self.maybe_normalize_for_sort(app.events.state.tasks_by_timestamp(), sort_by)
 
@@ -71,7 +73,7 @@ class TasksDataTable(BaseHandler):
             task_dict = as_dict(self.format_task(task)[1])
             if task_dict.get('worker'):
                 task_dict['worker'] = task_dict['worker'].hostname
-
+            task_dict['timestamp'] = task_dict.get('timestamp')
             filtered_tasks.append(task_dict)
 
         self.write(dict(draw=draw, data=filtered_tasks,
@@ -92,7 +94,58 @@ class TasksDataTable(BaseHandler):
 
     @web.authenticated
     def post(self):
-        return self.get()
+        app = self.application
+        draw = self.get_argument('draw', type=int)
+        start = self.get_argument('start', type=int)
+        length = self.get_argument('length', type=int)
+        search = self.get_argument('search[value]', type=str)
+        sort_column = self.get_argument('order[0][column]', type=int)
+        sort_order = self.get_argument('order[0][dir]', type=str)
+
+        taskname = self.get_argument('taskname', None)
+        workername = self.get_argument('workername', None)
+
+        column = {
+            0: 'name',
+            1: 'uuid',
+            2: 'state',
+            6: 'received',
+            7: 'started',
+            8: 'duration',
+            9: 'runtime',
+            10: 'worker',
+            13: 'retries',
+            14: 'revoked',
+        }
+
+        sort_column = column[sort_column]
+        sort_order = '-' if sort_order == 'desc' else ''
+
+        tasks = self.get_filtered_tasks(
+            app.events,
+            limit=length,
+            offset=start,
+            sort_by=sort_order + sort_column,
+            search=search,
+            taskname=taskname,
+            workername=workername
+        )
+
+        filtered_tasks = []
+        for _, task in tasks:
+            task_data = task.as_dict()
+            task_data['worker'] = task.worker.hostname if task.worker else None
+            task_data['timestamp'] = task.timestamp
+            filtered_tasks.append(task_data)
+
+        response = {
+            'draw': draw,
+            'recordsTotal': app.events.state.task_count(),
+            'recordsFiltered': len(filtered_tasks),
+            'data': filtered_tasks,
+        }
+
+        self.write(json.dumps(response))
 
     def format_task(self, task):
         uuid, args = task
@@ -104,6 +157,41 @@ class TasksDataTable(BaseHandler):
             except Exception:
                 logger.exception("Failed to format '%s' task", uuid)
         return uuid, args
+
+    def get_filtered_tasks(self, events, limit=None, offset=0, sort_by=None, search=None, taskname=None, workername=None):
+        tasks = events.state.tasks_by_timestamp()
+        filtered_tasks = []
+
+        search_terms = parse_search_terms(search) if search else None
+
+        for uuid, task in tasks.items():
+            if search_terms and not self.match_task(task, search_terms):
+                continue
+            if taskname and taskname.lower() not in task.name.lower():
+                continue
+            if workername and (not task.worker or workername.lower() not in task.worker.hostname.lower()):
+                continue
+            filtered_tasks.append((uuid, task))
+
+        if sort_by:
+            reverse = sort_by.startswith('-')
+            sort_key = sort_by[1:] if reverse else sort_by
+            filtered_tasks.sort(key=lambda x: getattr(x[1], sort_key, None), reverse=reverse)
+
+        return filtered_tasks[offset:offset+limit] if limit else filtered_tasks[offset:]
+
+    def match_task(self, task, terms):
+        for term in terms:
+            if term.key:
+                value = getattr(task, term.key, None)
+                if value is None:
+                    return False
+                if term.operator == '=' and term.value.lower() not in str(value).lower():
+                    return False
+            else:
+                if term.value.lower() not in task.name.lower():
+                    return False
+        return True
 
 
 class TasksView(BaseHandler):

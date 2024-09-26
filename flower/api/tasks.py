@@ -1,7 +1,7 @@
 import json
 import logging
 from collections import OrderedDict
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from celery import states
 from celery.backends.base import DisabledBackend
@@ -39,6 +39,11 @@ class BaseTaskHandler(BaseApiHandler):
             raise HTTPError(400, 'args must be an array')
 
         return args, kwargs, options
+
+    def calculate_duration(self, task):
+        if task.timestamp and task.timestamp_done:
+            return str(timedelta(seconds=task.timestamp_done - task.timestamp))
+        return None
 
     @staticmethod
     def backend_configured(result):
@@ -119,26 +124,41 @@ Execute a task by name and wait results
 :statuscode 401: unauthorized request
 :statuscode 404: unknown task
         """
-        args, kwargs, options = self.get_task_args()
-        logger.debug("Invoking a task '%s' with '%s' and '%s'",
-                     taskname, args, kwargs)
+        app = self.application
+        limit = self.get_argument('limit', None)
+        offset = self.get_argument('offset', default=0, type=int)
+        worker = self.get_argument('workername', None)
+        type = self.get_argument('taskname', None)
+        state = self.get_argument('state', None)
+        received_start = self.get_argument('received_start', None)
+        received_end = self.get_argument('received_end', None)
+        sort_by = self.get_argument('sort_by', None)
+        search = self.get_argument('search', None)
 
-        try:
-            task = self.capp.tasks[taskname]
-        except KeyError as exc:
-            raise HTTPError(404, f"Unknown task '{taskname}'") from exc
+        limit = limit and int(limit)
+        offset = max(offset, 0)
+        worker = worker if worker != 'All' else None
+        type = type if type != 'All' else None
+        state = state if state != 'All' else None
 
-        try:
-            self.normalize_options(options)
-        except ValueError as exc:
-            raise HTTPError(400, 'Invalid option') from exc
+        result = []
+        for task_id, task in tasks.iter_tasks(
+                app.events, limit=limit, offset=offset, sort_by=sort_by, type=type,
+                worker=worker, state=state,
+                received_start=received_start,
+                received_end=received_end,
+                search=search
+        ):
+            task = tasks.as_dict(task)
+            worker = task.pop('worker', None)
+            if worker is not None:
+                task['worker'] = worker.hostname
 
-        result = task.apply_async(args=args, kwargs=kwargs, **options)
-        response = {'task-id': result.task_id}
+            # Add duration to the task dictionary
+            task['duration'] = self.calculate_duration(task)
 
-        response = await IOLoop.current().run_in_executor(
-            None, self.wait_results, result, response)
-        self.write(response)
+            result.append((task_id, task))
+        self.write(OrderedDict(result))
 
     def wait_results(self, result, response):
         # Wait until task finished and do not raise anything
@@ -635,4 +655,27 @@ Get a task info
         if task.worker is not None:
             response['worker'] = task.worker.hostname
 
+        # Add duration to the response
+        response['duration'] = self.calculate_duration(task)
+
         self.write(response)
+
+
+class FilterTasks(BaseTaskHandler):
+    @web.authenticated
+    def get(self):
+        app = self.application
+        name = self.get_argument('name', None)
+        worker = self.get_argument('worker', None)
+
+        result = []
+        for task_id, task in tasks.iter_tasks(app.events):
+            task_dict = tasks.as_dict(task)
+            if (name is None or task_dict['name'] == name) and \
+               (worker is None or (task.worker and task.worker.hostname == worker)):
+                worker_hostname = task.worker.hostname if task.worker else None
+                task_dict['worker'] = worker_hostname
+                task_dict['duration'] = self.calculate_duration(task)
+                result.append((task_id, task_dict))
+
+        self.write(OrderedDict(result))

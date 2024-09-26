@@ -15,6 +15,13 @@ var flower = (function () {
         alertContainer.appendChild(wrapper);
     }
 
+    function calculateDuration(started, timestamp) {
+        if (started && timestamp) {
+            return ((timestamp - started) / 1000).toFixed(2) + ' sec';
+        }
+        return 'N/A';
+    }
+
     function url_prefix() {
         var prefix = $('#url_prefix').val();
         if (prefix) {
@@ -267,7 +274,7 @@ var flower = (function () {
             var timeout = parseInt($(event.target).siblings().closest("input").val()),
                 type = $(event.target).text().toLowerCase(),
                 taskname = $(event.target).closest("tr").children("td:eq(0)").text(),
-                post_data = {'workername': $('#workername').text()};
+                post_data = { 'workername': $('#workername').text() };
 
             taskname = taskname.split(' ')[0]; // removes [rate_limit=xxx]
             post_data[type] = timeout;
@@ -330,7 +337,7 @@ var flower = (function () {
             success: function (data) {
                 show_alert(data.message, "success");
                 document.getElementById("task-revoke").disabled = true;
-                setTimeout(function() {location.reload();}, 5000);
+                setTimeout(function () { location.reload(); }, 5000);
             },
             error: function (data) {
                 show_alert(data.responseText, "danger");
@@ -354,7 +361,7 @@ var flower = (function () {
             success: function (data) {
                 show_alert(data.message, "success");
                 document.getElementById("task-terminate").disabled = true;
-                setTimeout(function() {location.reload();}, 5000);
+                setTimeout(function () { location.reload(); }, 5000);
             },
             error: function (data) {
                 show_alert(data.responseText, "danger");
@@ -443,9 +450,8 @@ var flower = (function () {
             order: [
                 [1, "des"]
             ],
-            footerCallback: function( tfoot, data, start, end, display ) {
-                var api = this.api();
-                var columns = {2:"STARTED", 3:"", 4:"FAILURE", 5:"SUCCESS", 6:"RETRY"};
+            footerCallback: function (tfoot, data, start, end, display) {
+                var api = this.api(); var columns = { 2: "STARTED", 3: "", 4: "FAILURE", 5: "SUCCESS", 6: "RETRY" };
                 for (const [column, state] of Object.entries(columns)) {
                     var total = api.column(column).data().reduce(sum, 0);
                     var footer = total;
@@ -519,12 +525,12 @@ var flower = (function () {
                     }
                     return data;
                 }
-            }, ],
+            },],
         });
 
         var autorefresh_interval = $.urlParam('autorefresh') || 1;
         if (autorefresh !== 0) {
-            setInterval( function () {
+            setInterval(function () {
                 $('#workers-table').DataTable().ajax.reload(null, false);
             }, autorefresh_interval * 1000);
         }
@@ -554,7 +560,11 @@ var flower = (function () {
             },
             ajax: {
                 type: 'POST',
-                url: url_prefix() + '/tasks/datatable'
+                url: url_prefix() + '/tasks/datatable',
+                data: function (d) {
+                    d.taskname = $('#task-name-filter').val();
+                    d.workername = $('#worker-filter').val();
+                }
             },
             order: [
                 [7, "desc"]
@@ -585,12 +595,12 @@ var flower = (function () {
                 className: "text-center",
                 render: function (data, type, full, meta) {
                     switch (data) {
-                    case 'SUCCESS':
-                        return '<span class="badge bg-success">' + data + '</span>';
-                    case 'FAILURE':
-                        return '<span class="badge bg-danger">' + data + '</span>';
-                    default:
-                        return '<span class="badge bg-secondary">' + data + '</span>';
+                        case 'SUCCESS':
+                            return '<span class="badge bg-success">' + data + '</span>';
+                        case 'FAILURE':
+                            return '<span class="badge bg-danger">' + data + '</span>';
+                        default:
+                            return '<span class="badge bg-secondary">' + data + '</span>';
                     }
                 }
             }, {
@@ -635,6 +645,14 @@ var flower = (function () {
                 }
             }, {
                 targets: 8,
+                data: null,
+                className: "text-center",
+                visible: isColumnVisible('duration'),
+                render: function (data, type, full, meta) {
+                    return calculateDuration(full.started, full.timestamp);
+                }
+            }, {
+                targets: 9,
                 data: 'runtime',
                 className: "text-center",
                 visible: isColumnVisible('runtime'),
@@ -642,27 +660,27 @@ var flower = (function () {
                     return data ? data.toFixed(2) : data;
                 }
             }, {
-                targets: 9,
+                targets: 10,
                 data: 'worker',
                 visible: isColumnVisible('worker'),
                 render: function (data, type, full, meta) {
                     return '<a href="' + url_prefix() + '/worker/' + encodeURIComponent(data) + '">' + data + '</a>';
                 }
             }, {
-                targets: 10,
+                targets: 11,
                 data: 'exchange',
                 visible: isColumnVisible('exchange')
             }, {
-                targets: 11,
+                targets: 12,
                 data: 'routing_key',
                 visible: isColumnVisible('routing_key')
             }, {
-                targets: 12,
+                targets: 13,
                 data: 'retries',
                 className: "text-center",
                 visible: isColumnVisible('retries')
             }, {
-                targets: 13,
+                targets: 14,
                 data: 'revoked',
                 className: "text-nowrap",
                 visible: isColumnVisible('revoked'),
@@ -673,19 +691,23 @@ var flower = (function () {
                     return data;
                 }
             }, {
-                targets: 14,
+                targets: 15,
                 data: 'exception',
                 className: "text-nowrap",
                 visible: isColumnVisible('exception')
             }, {
-                targets: 15,
+                targets: 16,
                 data: 'expires',
                 visible: isColumnVisible('expires')
             }, {
-                targets: 16,
+                targets: 17,
                 data: 'eta',
                 visible: isColumnVisible('eta')
-            }, ],
+            },],
+        });
+
+        $('#task-name-filter, #worker-filter').on('change', function () {
+            $('#tasks-table').DataTable().ajax.reload();
         });
 
     });
