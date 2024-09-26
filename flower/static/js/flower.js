@@ -552,14 +552,6 @@ var flower = (function () {
                     }
                     return data;
                 }
-            }, {
-                targets: 8,
-                data: null,
-                className: "text-center",
-                visible: isColumnVisible('duration'),
-                render: function (data, type, full, meta) {
-                    return calculateDuration(full.started, full.timestamp);
-                }
             },],
         });
 
@@ -738,7 +730,7 @@ var flower = (function () {
                 targets: 17,
                 data: 'eta',
                 visible: isColumnVisible('eta')
-            },],
+            }],
         });
 
         $('#task-name-filter, #worker-filter').on('change', function () {
