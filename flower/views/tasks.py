@@ -6,7 +6,7 @@ from functools import total_ordering
 from tornado import web
 
 from ..utils.tasks import as_dict, get_task_by_id, iter_tasks
-from ..utils.search import parse_search_terms
+from flower.utils.search import parse_search_terms
 from ..views import BaseHandler
 
 logger = logging.getLogger(__name__)
