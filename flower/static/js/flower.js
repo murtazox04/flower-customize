@@ -66,9 +66,18 @@ var flower = (function () {
     }
 
     function format_time(timestamp) {
-        var time = $('#time').val(),
-            prefix = time.startsWith('natural-time') ? 'natural-time' : 'time',
-            tz = time.substr(prefix.length + 1) || 'UTC';
+        var time = $('#time').val();
+        if (!time) {
+            console.warn('Time value is not set. Defaulting to UTC.');
+            time = 'time-UTC';
+        }
+        var prefix = time.startsWith('natural-time') ? 'natural-time' : 'time';
+        var tz = time.substr(prefix.length + 1) || 'UTC';
+
+        if (!timestamp) {
+            console.warn('Timestamp is undefined or null.');
+            return 'N/A';
+        }
 
         if (prefix === 'natural-time') {
             return moment.unix(timestamp).tz(tz).fromNow();
@@ -413,6 +422,11 @@ var flower = (function () {
     });
 
     $(document).ready(function () {
+        var $timeElement = $('#time');
+        if ($timeElement.length === 0) {
+            console.warn('#time element not found. Adding a default value.');
+            $('body').append('<input type="hidden" id="time" value="time-UTC">');
+        }
         //https://github.com/twitter/bootstrap/issues/1768
         var shiftWindow = function () {
             scrollBy(0, -50);
