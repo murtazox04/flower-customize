@@ -41,47 +41,7 @@
             </tr>
         </thead>
         <tbody>
-            {% for uuid, task in tasks %}
-            {% if getattr(task, 'name', None) is None %}
-            {% continue %}
-            {% end %}
-            <tr>
-                <td>{{ task.name }}</td>
-                <td>{{ task.uuid }}</td>
-                <td>{{ task.state }}</td>
-                <td>{{ task.args }}</td>
-                <td>{{ task.kwargs }}</td>
-                <td>
-                    {% if task.state == "SUCCESS" %}
-                    {{ task.result }}
-                    {% elif task.state == "FAILURE" %}
-                    {{ task.exception }}
-                    {% end %}
-                </td>
-                <td>{{ humanize(task.received, type='time') }}</td>
-                <td>{{ humanize(task.started, type='time') }}</td>
-                <td>
-                    {% if task.timestamp and task.started %}
-                    {{ '%.2f' % ((task.timestamp - task.started) / 1000) }} sec
-                    {% else %}
-                    N/A
-                    {% end %}
-                </td>
-                <td>
-                    {% if task.runtime %}
-                    {{ '%.2f' % task.runtime }} sec
-                    {% end %}
-                </td>
-                <td>{{ task.worker }}</td>
-                <td>{{ task.exchange }}</td>
-                <td>{{ task.routing_key }}</td>
-                <td>{{ task.retries }}</td>
-                <td>{{ humanize(task.revoked, type='time') }}</td>
-                <td>{{ task.exception }}</td>
-                <td>{{ task.expires }}</td>
-                <td>{{ task.eta }}</td>
-            </tr>
-            {% end %}
+            <!-- Empty tbody as we'll populate it using DataTables -->
         </tbody>
     </table>
 </div>
