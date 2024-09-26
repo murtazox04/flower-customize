@@ -17,7 +17,7 @@ var flower = (function () {
 
     function calculateDuration(started, timestamp) {
         if (started && timestamp && !isNaN(started) && !isNaN(timestamp)) {
-            var duration = (timestamp - started) / 1000; // Convert to seconds
+            var duration = (timestamp - started) / 1000;
             var hours = Math.floor(duration / 3600);
             var minutes = Math.floor((duration % 3600) / 60);
             var seconds = Math.floor(duration % 60);
@@ -568,7 +568,6 @@ var flower = (function () {
         if (!active_page('/tasks')) {
             return;
         }
-
         $('#tasks-table').DataTable({
             rowId: 'uuid',
             searching: true,
@@ -602,14 +601,12 @@ var flower = (function () {
             columnDefs: [{
                 targets: 0,
                 data: 'name',
-                visible: isColumnVisible('name'),
                 render: function (data, type, full, meta) {
                     return data;
                 }
             }, {
                 targets: 1,
                 data: 'uuid',
-                visible: isColumnVisible('uuid'),
                 orderable: false,
                 className: "text-nowrap",
                 render: function (data, type, full, meta) {
@@ -618,7 +615,6 @@ var flower = (function () {
             }, {
                 targets: 2,
                 data: 'state',
-                visible: isColumnVisible('state'),
                 className: "text-center",
                 render: function (data, type, full, meta) {
                     switch (data) {
@@ -634,25 +630,21 @@ var flower = (function () {
                 targets: 3,
                 data: 'args',
                 className: "text-nowrap overflow-auto",
-                visible: isColumnVisible('args'),
                 render: htmlEscapeEntities
             }, {
                 targets: 4,
                 data: 'kwargs',
                 className: "text-nowrap overflow-auto",
-                visible: isColumnVisible('kwargs'),
                 render: htmlEscapeEntities
             }, {
                 targets: 5,
                 data: 'result',
-                visible: isColumnVisible('result'),
                 className: "text-nowrap overflow-auto",
                 render: htmlEscapeEntities
             }, {
                 targets: 6,
                 data: 'received',
                 className: "text-nowrap",
-                visible: isColumnVisible('received'),
                 render: function (data, type, full, meta) {
                     if (data) {
                         return format_time(data);
@@ -663,7 +655,6 @@ var flower = (function () {
                 targets: 7,
                 data: 'started',
                 className: "text-nowrap",
-                visible: isColumnVisible('started'),
                 render: function (data, type, full, meta) {
                     if (data) {
                         return format_time(data);
@@ -674,7 +665,6 @@ var flower = (function () {
                 targets: 8,
                 data: null,
                 className: "text-center",
-                visible: isColumnVisible('duration'),
                 render: function (data, type, full, meta) {
                     return calculateDuration(full.started, full.timestamp);
                 }
@@ -682,35 +672,29 @@ var flower = (function () {
                 targets: 9,
                 data: 'runtime',
                 className: "text-center",
-                visible: isColumnVisible('runtime'),
                 render: function (data, type, full, meta) {
                     return data ? data.toFixed(2) : data;
                 }
             }, {
                 targets: 10,
                 data: 'worker',
-                visible: isColumnVisible('worker'),
                 render: function (data, type, full, meta) {
                     return '<a href="' + url_prefix() + '/worker/' + encodeURIComponent(data) + '">' + data + '</a>';
                 }
             }, {
                 targets: 11,
-                data: 'exchange',
-                visible: isColumnVisible('exchange')
+                data: 'exchange'
             }, {
                 targets: 12,
-                data: 'routing_key',
-                visible: isColumnVisible('routing_key')
+                data: 'routing_key'
             }, {
                 targets: 13,
                 data: 'retries',
-                className: "text-center",
-                visible: isColumnVisible('retries')
+                className: "text-center"
             }, {
                 targets: 14,
                 data: 'revoked',
                 className: "text-nowrap",
-                visible: isColumnVisible('revoked'),
                 render: function (data, type, full, meta) {
                     if (data) {
                         return format_time(data);
@@ -720,16 +704,10 @@ var flower = (function () {
             }, {
                 targets: 15,
                 data: 'exception',
-                className: "text-nowrap",
-                visible: isColumnVisible('exception')
+                className: "text-nowrap"
             }, {
                 targets: 16,
-                data: 'expires',
-                visible: isColumnVisible('expires')
-            }, {
-                targets: 17,
-                data: 'eta',
-                visible: isColumnVisible('eta')
+                data: 'expires'
             }],
         });
 
