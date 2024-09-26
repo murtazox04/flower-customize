@@ -159,12 +159,12 @@ class TasksDataTable(BaseHandler):
         return uuid, args
 
     def get_filtered_tasks(self, events, limit=None, offset=0, sort_by=None, search=None, taskname=None, workername=None):
-        tasks = list(events.state.tasks_by_timestamp())  # Convert generator to list
+        tasks = list(events.state.tasks())
         filtered_tasks = []
 
         search_terms = parse_search_terms(search) if search else None
 
-        for task in tasks:
+        for _, task in tasks:
             if search_terms and not self.match_task(task, search_terms):
                 continue
             if taskname and taskname.lower() not in task.name.lower():
