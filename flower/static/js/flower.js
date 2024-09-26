@@ -49,7 +49,6 @@ var flower = (function () {
         return '';
     }
 
-    //https://github.com/DataTables/DataTables/blob/1.10.11/media/js/jquery.dataTables.js#L14882
     function htmlEscapeEntities(d) {
         return typeof d === 'string' ?
             d.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') :
@@ -66,6 +65,23 @@ var flower = (function () {
         }
     }
 
+    function format_time(timestamp) {
+        var time = $('#time').val(),
+            prefix = time.startsWith('natural-time') ? 'natural-time' : 'time',
+            tz = time.substr(prefix.length + 1) || 'UTC';
+
+        if (prefix === 'natural-time') {
+            return moment.unix(timestamp).tz(tz).fromNow();
+        }
+        return moment.unix(timestamp).tz(tz).format('YYYY-MM-DD HH:mm:ss.SSS');
+    }
+
+    $.urlParam = function (name) {
+        var results = new RegExp('[\\?&]' + name + '=([^&#]*)').exec(window.location.href);
+        return (results && results[1]) || 0;
+    };
+
+    // Worker related functions
     $('#worker-refresh').on('click', function (event) {
         event.preventDefault();
         event.stopPropagation();
@@ -396,39 +412,6 @@ var flower = (function () {
         });
     });
 
-    function sum(a, b) {
-        return parseInt(a, 10) + parseInt(b, 10);
-    }
-
-    function format_time(timestamp) {
-        var time = $('#time').val(),
-            prefix = time.startsWith('natural-time') ? 'natural-time' : 'time',
-            tz = time.substr(prefix.length + 1) || 'UTC';
-
-        if (prefix === 'natural-time') {
-            return moment.unix(timestamp).tz(tz).fromNow();
-        }
-        return moment.unix(timestamp).tz(tz).format('YYYY-MM-DD HH:mm:ss.SSS');
-    }
-
-    function isColumnVisible(name) {
-        var columns = $('#columns').val();
-        if (columns === "all")
-            return true;
-        if (columns) {
-            columns = columns.split(',').map(function (e) {
-                return e.trim();
-            });
-            return columns.indexOf(name) !== -1;
-        }
-        return true;
-    }
-
-    $.urlParam = function (name) {
-        var results = new RegExp('[\\?&]' + name + '=([^&#]*)').exec(window.location.href);
-        return (results && results[1]) || 0;
-    };
-
     $(document).ready(function () {
         //https://github.com/twitter/bootstrap/issues/1768
         var shiftWindow = function () {
@@ -475,20 +458,8 @@ var flower = (function () {
             },
             ajax: url_prefix() + '/workers?json=1',
             order: [
-                [1, "des"]
+                [1, "desc"]
             ],
-            footerCallback: function (tfoot, data, start, end, display) {
-                var api = this.api(); var columns = { 2: "STARTED", 3: "", 4: "FAILURE", 5: "SUCCESS", 6: "RETRY" };
-                for (const [column, state] of Object.entries(columns)) {
-                    var total = api.column(column).data().reduce(sum, 0);
-                    var footer = total;
-                    if (total !== 0) {
-                        let queryParams = (state !== '' ? `?state=${state}` : '');
-                        footer = '<a href="' + url_prefix() + '/tasks' + queryParams + '">' + total + '</a>';
-                    }
-                    $(api.column(column).footer()).html(footer);
-                }
-            },
             columnDefs: [{
                 targets: 0,
                 data: 'hostname',
@@ -552,7 +523,20 @@ var flower = (function () {
                     }
                     return data;
                 }
-            },],
+            }],
+            footerCallback: function (tfoot, data, start, end, display) {
+                var api = this.api();
+                var columns = { 2: "STARTED", 3: "", 4: "FAILURE", 5: "SUCCESS", 6: "RETRY" };
+                for (const [column, state] of Object.entries(columns)) {
+                    var total = api.column(column).data().reduce((a, b) => parseInt(a) + parseInt(b), 0);
+                    var footer = total;
+                    if (total !== 0) {
+                        let queryParams = (state !== '' ? `?state=${state}` : '');
+                        footer = '<a href="' + url_prefix() + '/tasks' + queryParams + '">' + total + '</a>';
+                    }
+                    $(api.column(column).footer()).html(footer);
+                }
+            }
         });
 
         var autorefresh_interval = $.urlParam('autorefresh') || 1;
@@ -561,13 +545,13 @@ var flower = (function () {
                 $('#workers-table').DataTable().ajax.reload(null, false);
             }, autorefresh_interval * 1000);
         }
-
     });
 
     $(document).ready(function () {
         if (!active_page('/tasks')) {
             return;
         }
+        console.log('Initializing tasks table');
         $('#tasks-table').DataTable({
             rowId: 'uuid',
             searching: true,
@@ -590,6 +574,10 @@ var flower = (function () {
                 data: function (d) {
                     d.taskname = $('#task-name-filter').val();
                     d.workername = $('#worker-filter').val();
+                },
+                error: function (xhr, error, thrown) {
+                    console.error('Error loading tasks data:', error);
+                    console.error('Server response:', xhr.responseText);
                 }
             },
             order: [
@@ -646,20 +634,14 @@ var flower = (function () {
                 data: 'received',
                 className: "text-nowrap",
                 render: function (data, type, full, meta) {
-                    if (data) {
-                        return format_time(data);
-                    }
-                    return data;
+                    return data ? format_time(data) : data;
                 }
             }, {
                 targets: 7,
                 data: 'started',
                 className: "text-nowrap",
                 render: function (data, type, full, meta) {
-                    if (data) {
-                        return format_time(data);
-                    }
-                    return data;
+                    return data ? format_time(data) : data;
                 }
             }, {
                 targets: 8,
@@ -696,10 +678,7 @@ var flower = (function () {
                 data: 'revoked',
                 className: "text-nowrap",
                 render: function (data, type, full, meta) {
-                    if (data) {
-                        return format_time(data);
-                    }
-                    return data;
+                    return data ? format_time(data) : data;
                 }
             }, {
                 targets: 15,
@@ -709,11 +688,20 @@ var flower = (function () {
                 targets: 16,
                 data: 'expires'
             }],
+            initComplete: function (settings, json) {
+                console.log('DataTable initialization complete');
+                console.log('Received data:', json);
+            }
         });
 
         $('#task-name-filter, #worker-filter').on('change', function () {
             $('#tasks-table').DataTable().ajax.reload();
         });
+        console.log('Tasks page initialization complete');
     });
 
-}(jQuery));
+    return {
+        show_alert: show_alert,
+        url_prefix: url_prefix,
+    };
+}());
