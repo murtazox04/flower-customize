@@ -715,31 +715,7 @@ var flower = (function () {
                 render: function (data, type, full, meta) {
                     return '<a href="' + url_prefix() + '/worker/' + encodeURIComponent(data) + '">' + data + '</a>';
                 }
-            }, {
-                targets: 11,
-                data: 'exchange'
-            }, {
-                targets: 12,
-                data: 'routing_key'
-            }, {
-                targets: 13,
-                data: 'retries',
-                className: "text-center"
-            }, {
-                targets: 14,
-                data: 'revoked',
-                className: "text-nowrap",
-                render: function (data, type, full, meta) {
-                    return data ? format_time(data) : data;
-                }
-            }, {
-                targets: 15,
-                data: 'exception',
-                className: "text-nowrap"
-            }, {
-                targets: 16,
-                data: 'expires'
-            }],
+            },],
             initComplete: function (settings, json) {
                 console.log('DataTable initialization complete');
                 console.log('Received data:', json);
