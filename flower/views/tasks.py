@@ -111,11 +111,10 @@ class TasksDataTable(BaseHandler):
             2: 'state',
             6: 'received',
             7: 'started',
-            8: 'duration',
-            9: 'runtime',
-            10: 'worker',
-            13: 'retries',
-            14: 'revoked',
+            8: 'runtime',
+            9: 'worker',
+            12: 'retries',
+            13: 'revoked',
         }
 
         sort_column = column[sort_column]
@@ -135,12 +134,11 @@ class TasksDataTable(BaseHandler):
         for _, task in tasks:
             task_data = task.as_dict()
             task_data['worker'] = task.worker.hostname if task.worker else None
-            task_data['timestamp'] = task.timestamp
             filtered_tasks.append(task_data)
 
         response = {
             'draw': draw,
-            'recordsTotal': app.events.state.task_count(),
+            'recordsTotal': len(app.events.state.tasks),
             'recordsFiltered': len(filtered_tasks),
             'data': filtered_tasks,
         }
