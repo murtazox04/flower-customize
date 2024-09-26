@@ -70,8 +70,9 @@ var flower = (function () {
             success: function (data) {
                 show_alert(data.message || 'Successfully refreshed', 'success');
             },
-            error: function (data) {
-                show_alert(data.responseText, "danger");
+            error: function (xhr, status, error) {
+                console.error('Error:', status, error);
+                show_alert('An error occurred: ' + error, 'danger');
             }
         });
     });
@@ -91,8 +92,9 @@ var flower = (function () {
             success: function (data) {
                 show_alert(data.message || 'Refreshed All Workers', 'success');
             },
-            error: function (data) {
-                show_alert(data.responseText, "danger");
+            error: function (xhr, status, error) {
+                console.error('Error:', status, error);
+                show_alert('An error occurred: ' + error, 'danger');
             }
         });
     });
@@ -114,8 +116,9 @@ var flower = (function () {
             success: function (data) {
                 show_alert(data.message, "success");
             },
-            error: function (data) {
-                show_alert(data.responseText, "danger");
+            error: function (xhr, status, error) {
+                console.error('Error:', status, error);
+                show_alert('An error occurred: ' + error, 'danger');
             }
         });
     });
@@ -137,8 +140,9 @@ var flower = (function () {
             success: function (data) {
                 show_alert(data.message, "success");
             },
-            error: function (data) {
-                show_alert(data.responseText, "danger");
+            error: function (xhr, status, error) {
+                console.error('Error:', status, error);
+                show_alert('An error occurred: ' + error, 'danger');
             }
         });
     });
@@ -161,8 +165,9 @@ var flower = (function () {
             success: function (data) {
                 show_alert(data.message, "success");
             },
-            error: function (data) {
-                show_alert(data.responseText, "danger");
+            error: function (xhr, status, error) {
+                console.error('Error:', status, error);
+                show_alert('An error occurred: ' + error, 'danger');
             }
         });
     });
@@ -185,8 +190,9 @@ var flower = (function () {
             success: function (data) {
                 show_alert(data.message, "success");
             },
-            error: function (data) {
-                show_alert(data.responseText, "danger");
+            error: function (xhr, status, error) {
+                console.error('Error:', status, error);
+                show_alert('An error occurred: ' + error, 'danger');
             }
         });
     });
@@ -211,8 +217,9 @@ var flower = (function () {
             success: function (data) {
                 show_alert(data.message, "success");
             },
-            error: function (data) {
-                show_alert(data.responseText, "danger");
+            error: function (xhr, status, error) {
+                console.error('Error:', status, error);
+                show_alert('An error occurred: ' + error, 'danger');
             }
         });
     });
@@ -235,8 +242,9 @@ var flower = (function () {
             success: function (data) {
                 show_alert(data.message, "success");
             },
-            error: function (data) {
-                show_alert(data.responseText, "danger");
+            error: function (xhr, status, error) {
+                console.error('Error:', status, error);
+                show_alert('An error occurred: ' + error, 'danger');
             }
         });
     });
@@ -263,8 +271,9 @@ var flower = (function () {
             success: function (data) {
                 show_alert(data.message, "success");
             },
-            error: function (data) {
-                show_alert(data.responseText, "danger");
+            error: function (xhr, status, error) {
+                console.error('Error:', status, error);
+                show_alert('An error occurred: ' + error, 'danger');
             }
         });
     });
@@ -292,8 +301,9 @@ var flower = (function () {
                 success: function (data) {
                     show_alert(data.message, "success");
                 },
-                error: function (data) {
-                    show_alert($(data.responseText).text(), "danger");
+                error: function (xhr, status, error) {
+                    console.error('Error:', status, error);
+                    show_alert('An error occurred: ' + error, 'danger');
                 }
             });
         } else if (event.target.id.startsWith("task-rate-limit-")) {
@@ -314,8 +324,9 @@ var flower = (function () {
                 success: function (data) {
                     show_alert(data.message, "success");
                 },
-                error: function (data) {
-                    show_alert(data.responseText, "danger");
+                error: function (xhr, status, error) {
+                    console.error('Error:', status, error);
+                    show_alert('An error occurred: ' + error, 'danger');
                 }
             });
         }
@@ -339,8 +350,9 @@ var flower = (function () {
                 document.getElementById("task-revoke").disabled = true;
                 setTimeout(function () { location.reload(); }, 5000);
             },
-            error: function (data) {
-                show_alert(data.responseText, "danger");
+            error: function (xhr, status, error) {
+                console.error('Error:', status, error);
+                show_alert('An error occurred: ' + error, 'danger');
             }
         });
     });
@@ -363,8 +375,9 @@ var flower = (function () {
                 document.getElementById("task-terminate").disabled = true;
                 setTimeout(function () { location.reload(); }, 5000);
             },
-            error: function (data) {
-                show_alert(data.responseText, "danger");
+            error: function (xhr, status, error) {
+                console.error('Error:', status, error);
+                show_alert('An error occurred: ' + error, 'danger');
             }
         });
     });

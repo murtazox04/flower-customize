@@ -183,15 +183,19 @@ class TasksDataTable(BaseHandler):
 
     def match_task(self, task, terms):
         for term in terms:
-            if term.key:
-                value = getattr(task, term.key, None)
-                if value is None:
-                    return False
-                if term.operator == '=' and term.value.lower() not in str(value).lower():
+            if isinstance(term, str):
+                if term.lower() not in task.name.lower():
                     return False
             else:
-                if term.value.lower() not in task.name.lower():
-                    return False
+                if term.key:
+                    value = getattr(task, term.key, None)
+                    if value is None:
+                        return False
+                    if term.operator == '=' and term.value.lower() not in str(value).lower():
+                        return False
+                else:
+                    if term.value.lower() not in task.name.lower():
+                        return False
         return True
 
 
