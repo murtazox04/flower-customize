@@ -16,7 +16,7 @@ var flower = (function () {
     }
 
     function calculateDuration(started, timestamp) {
-        if (started && timestamp) {
+        if (started && timestamp && !isNaN(started) && !isNaN(timestamp)) {
             return ((timestamp - started) / 1000).toFixed(2) + ' sec';
         }
         return 'N/A';
