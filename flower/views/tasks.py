@@ -159,27 +159,27 @@ class TasksDataTable(BaseHandler):
         return uuid, args
 
     def get_filtered_tasks(self, events, limit=None, offset=0, sort_by=None, search=None, taskname=None, workername=None):
-        tasks_generator = events.state.tasks()
+        tasks = events.state.tasks
         filtered_tasks = []
 
         search_terms = parse_search_terms(search) if search else None
 
-        for task in tasks_generator:
+        for uuid, task in tasks.items():
             if search_terms and not self.match_task(task, search_terms):
                 continue
             if taskname and taskname.lower() not in task.name.lower():
                 continue
             if workername and (not task.worker or workername.lower() not in task.worker.hostname.lower()):
                 continue
-            filtered_tasks.append(task)
+            filtered_tasks.append((uuid, task))
 
         if sort_by:
             reverse = sort_by.startswith('-')
             sort_key = sort_by[1:] if reverse else sort_by
-            filtered_tasks.sort(key=lambda x: getattr(x, sort_key, None), reverse=reverse)
+            filtered_tasks.sort(key=lambda x: getattr(x[1], sort_key, None), reverse=reverse)
 
         paginated_tasks = filtered_tasks[offset:offset+limit] if limit else filtered_tasks[offset:]
-        return [(task.uuid, task) for task in paginated_tasks]
+        return paginated_tasks
 
     def match_task(self, task, terms):
         for term in terms:
