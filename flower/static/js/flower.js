@@ -15,23 +15,32 @@ var flower = (function () {
         alertContainer.appendChild(wrapper);
     }
 
-    function calculateDuration(started, timestamp) {
-        if (started && timestamp && !isNaN(started) && !isNaN(timestamp)) {
-            var duration = (timestamp - started) / 1000;
-            var hours = Math.floor(duration / 3600);
-            var minutes = Math.floor((duration % 3600) / 60);
-            var seconds = Math.floor(duration % 60);
+    function calculateDuration(received, started) {
+        if (received && started) {
+            var receivedDate = new Date(received);
+            var startedDate = new Date(started);
 
-            var formattedDuration = '';
-            if (hours > 0) {
-                formattedDuration += hours + 'h ';
-            }
-            if (minutes > 0) {
-                formattedDuration += minutes + 'm ';
-            }
-            formattedDuration += seconds + 's';
+            if (!isNaN(receivedDate.getTime()) && !isNaN(startedDate.getTime())) {
+                var duration = (receivedDate - startedDate) / 1000; // Duration in seconds
 
-            return formattedDuration;
+                duration = Math.abs(duration);
+
+                var hours = Math.floor(duration / 3600);
+                var minutes = Math.floor((duration % 3600) / 60);
+                var seconds = Math.floor(duration % 60);
+                var milliseconds = Math.floor((duration % 1) * 1000);
+
+                var formattedDuration = '';
+                if (hours > 0) {
+                    formattedDuration += hours + 'h ';
+                }
+                if (minutes > 0) {
+                    formattedDuration += minutes + 'm ';
+                }
+                formattedDuration += seconds + '.' + milliseconds.toString().padStart(3, '0') + 's';
+
+                return formattedDuration.trim();
+            }
         }
         return 'N/A';
     }
@@ -662,7 +671,7 @@ var flower = (function () {
                 data: null,
                 className: "text-center",
                 render: function (data, type, full, meta) {
-                    return calculateDuration(full.started, full.timestamp);
+                    return calculateDuration(full.received, full.started);
                 }
             }, {
                 targets: 9,
