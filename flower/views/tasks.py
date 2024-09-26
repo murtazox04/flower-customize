@@ -174,8 +174,10 @@ class TasksDataTable(BaseHandler):
         if sort_by:
             reverse = sort_by.startswith('-')
             sort_key = sort_by[1:] if reverse else sort_by
-            filtered_tasks.sort(key=lambda x: getattr(x[1], sort_key, None), reverse=reverse)
-
+            def safe_sort_key(x):
+                value = getattr(x[1], sort_key, None)
+                return (value is not None, value)
+            filtered_tasks.sort(key=safe_sort_key, reverse=reverse)
         paginated_tasks = filtered_tasks[offset:offset+limit] if limit else filtered_tasks[offset:]
         return paginated_tasks
 
