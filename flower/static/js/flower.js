@@ -15,15 +15,29 @@ var flower = (function () {
         alertContainer.appendChild(wrapper);
     }
 
+    function formatRuntime(seconds) {
+        if (seconds === null || seconds === undefined) return '';
+
+        var hrs = Math.floor(seconds / 3600);
+        var mins = Math.floor((seconds % 3600) / 60);
+        var secs = (seconds % 60).toFixed(2);
+
+        if (hrs > 0) {
+            return hrs + 'h ' + (mins > 0 ? mins + 'm ' : '') + secs + 's';
+        } else if (mins > 0) {
+            return mins + 'm ' + secs + 's';
+        } else {
+            return secs + 's';
+        }
+    }
+
     function calculateDuration(received, started) {
         if (received && started) {
             var receivedDate = new Date(received);
             var startedDate = new Date(started);
 
             if (!isNaN(receivedDate.getTime()) && !isNaN(startedDate.getTime())) {
-                var duration = (receivedDate - startedDate) / 1000; // Duration in seconds
-
-                duration = Math.abs(duration);
+                var duration = Math.abs((receivedDate - startedDate) / 1000);
 
                 var hours = Math.floor(duration / 3600);
                 var minutes = Math.floor((duration % 3600) / 60);
@@ -39,10 +53,16 @@ var flower = (function () {
                 }
                 formattedDuration += seconds + '.' + milliseconds.toString().padStart(3, '0') + 's';
 
-                return formattedDuration.trim();
+                return {
+                    numeric: duration,
+                    formatted: formattedDuration.trim()
+                };
             }
         }
-        return 'N/A';
+        return {
+            numeric: 0,
+            formatted: '0.000s'
+        };
     }
 
     function url_prefix() {
@@ -85,7 +105,7 @@ var flower = (function () {
 
         if (!timestamp) {
             console.warn('Timestamp is undefined or null.');
-            return 'N/A';
+            return 0;
         }
 
         if (prefix === 'natural-time') {
@@ -671,15 +691,24 @@ var flower = (function () {
                 data: null,
                 className: "text-center",
                 render: function (data, type, full, meta) {
-                    return calculateDuration(full.received, full.started);
-                }
+                    var duration = calculateDuration(full.received, full.started);
+                    if (type === 'sort') {
+                        return duration.numeric;
+                    }
+                    return duration.formatted;
+                },
+                type: 'num'
             }, {
                 targets: 9,
                 data: 'runtime',
                 className: "text-center",
                 render: function (data, type, full, meta) {
-                    return data ? data.toFixed(2) : data;
-                }
+                    if (type === 'sort') {
+                        return data;
+                    }
+                    return formatRuntime(data);
+                },
+                type: 'num'
             }, {
                 targets: 10,
                 data: 'worker',
