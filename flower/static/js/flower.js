@@ -17,7 +17,21 @@ var flower = (function () {
 
     function calculateDuration(started, timestamp) {
         if (started && timestamp && !isNaN(started) && !isNaN(timestamp)) {
-            return ((timestamp - started) / 1000).toFixed(2) + ' sec';
+            var duration = (timestamp - started) / 1000; // Convert to seconds
+            var hours = Math.floor(duration / 3600);
+            var minutes = Math.floor((duration % 3600) / 60);
+            var seconds = Math.floor(duration % 60);
+
+            var formattedDuration = '';
+            if (hours > 0) {
+                formattedDuration += hours + 'h ';
+            }
+            if (minutes > 0) {
+                formattedDuration += minutes + 'm ';
+            }
+            formattedDuration += seconds + 's';
+
+            return formattedDuration;
         }
         return 'N/A';
     }
@@ -537,6 +551,14 @@ var flower = (function () {
                         return data.join(', ');
                     }
                     return data;
+                }
+            }, {
+                targets: 8,
+                data: null,
+                className: "text-center",
+                visible: isColumnVisible('duration'),
+                render: function (data, type, full, meta) {
+                    return calculateDuration(full.started, full.timestamp);
                 }
             },],
         });
